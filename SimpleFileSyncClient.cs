@@ -6,8 +6,8 @@ using System.Net.Sockets;
 using System.Text;
 using Simple;
 
-namespace SimpleConsoleClient {
-	public class SimpleConsoleClient {
+namespace Simple.FileSyncClient {
+	public class FileSyncClient {
 		public Dictionary<string, string> setting = new Dictionary<string, string>();
 
 		public SocketHelper socketHelper = new SocketHelper();
@@ -243,7 +243,7 @@ namespace SimpleConsoleClient {
 		static void Main(string[] args) {
 			//TODO: blet try blet blet
 			try {
-				SimpleConsoleClient scc = new SimpleConsoleClient();
+				FileSyncClient scc = new FileSyncClient();
 				//TODO: read from file
 				scc.setting.Add("ip", "127.0.0.1");
 				scc.setting.Add("port", "11211");
