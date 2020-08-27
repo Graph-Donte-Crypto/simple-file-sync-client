@@ -12,13 +12,33 @@ namespace Simple.FileSyncClient {
 
 		public SocketHelper socketHelper = new SocketHelper();
 
-		public void connect() {
+		public bool connect() {
 			string ip = setting.GetValueOrDefault("ip", null);
+
+			if (ip == null) {
+				Console.WriteLine("ip undefiend. Define as 'sfsc set ip [server_ip]'");
+				return false;
+			}
+
 			string port = setting.GetValueOrDefault("port", null);
-			//TODO: check for null
-			//TOOD: check for parse
-			socketHelper.connect(ip, int.Parse(port));
-			//
+
+			if (ip == null) {
+				Console.WriteLine("port undefiend. Define as 'sfsc set port [server_ip]'");
+				return false;
+			}
+
+			int port_as_int;
+			try {
+				port_as_int = int.Parse(port);
+			}
+			catch(Exception) {
+				Console.WriteLine("port isn't number. Redefine as 'sfsc set port [server_ip]'");
+				return false;
+			}
+
+			socketHelper.connect(ip, port_as_int);
+
+			return true;
 		}
 
 		public void close() {
@@ -29,7 +49,8 @@ namespace Simple.FileSyncClient {
 
 			FileStream stream = new FileInfo(path_target).Create();
 
-			connect();
+			if (!connect()) 
+				return;
 
 			socketHelper.sendMessage("get");
 
@@ -119,9 +140,10 @@ namespace Simple.FileSyncClient {
 		}
 
 		public void send(string path_source, string path_target) {
-			
-			connect();
-			
+
+			if (!connect())
+				return;
+
 			socketHelper.sendMessage("send");
 
 			socketHelper.sendMessage(path_target);
@@ -155,24 +177,24 @@ namespace Simple.FileSyncClient {
 
 			string help =
 			         "Usage:"
-			+ '\n' + "  scc set [key] [value]:"
+			+ '\n' + "  sfsc set [key] [value]:"
 			+ '\n' + "    key 'set' write key-value pair in local file"
 			+ '\n' + "    INFO: program use 'ip' and 'port' or 'url' to connect"
 			+ '\n'
-			+ '\n' + "  scc dir [path]"
+			+ '\n' + "  sfsc dir [path]"
 			+ '\n' + "    return 'dir' result with argument [path]"
 			+ '\n'
-			+ '\n' + "  scc get [source] [target]"
-			+ '\n' + "    get [source] (file or folder) from server to [target]"
-			+ '\n' + "    if [target] not specified, [target] - current directory"
-			+ '\n' + "    type 'help get' to more info"
+			+ '\n' + "  sfsc get [source] [target_directory]"
+			+ '\n' + "    get [source] (file or folder) from server to [target_directory]"
+			+ '\n' + "      [source] will be placed as [target_directory]/[source]"
+			+ '\n' + "    if [target_directory] not specified, [target_directory] - current directory"
 			+ '\n'
-			+ '\n' + "  scc send [source] [target]"
-			+ '\n' + "    send [source] (file or folder) to server placing in [target]"
-			+ '\n' + "    if [target] not specified, [target] - current server directory"
-			+ '\n' + "    type 'help send' to more info"
+			+ '\n' + "  sfsc send [source] [target_directory]"
+			+ '\n' + "    send [source] (file or folder) to server placing in [target_directory]"
+			+ '\n' + "      [source] will be placed as [target_directory]/[source]"
+			+ '\n' + "    if [target_directory] not specified, [target_directory] - current server directory"
 			+ '\n'
-			+ '\n' + "  scc remove [target]"
+			+ '\n' + "  sfsc remove [target]"
 			+ '\n' + "    remove [target] (file or folder) from server"
 			+ '\n'
 			;
@@ -180,70 +202,24 @@ namespace Simple.FileSyncClient {
 
 		}
 
-		static void showHelpGet() {
-			string help =
-			         "Usage:"
-			+ '\n' + "scc get [source] [target]"
-			+ '\n'
-			+ '\n' + "  if [source] == file and [target] == file"
-			+ '\n' + "    then [source] will be placed as [target]"
-			+ '\n' + "    example: scc get A.txt B.txt"
-			+ '\n' + "    we get file A, but place it as B"
-			+ '\n' + "    example: scc get A.txt Folder/B.txt"
-			+ '\n' + "    we get file A, but place it as B in Folder/"
-			+ '\n'
-			+ '\n' + "  if [source] == file and [target] == folder"
-			+ '\n' + "    then [source] will be placed in [target]"
-			+ '\n' + "    example: scc get A.txt Folder/"
-			+ '\n' + "    we get file A, but place it as Folder/A"
-			+ '\n'
-			+ '\n' + "  if [source] == folder and [target] == file"
-			+ '\n' + "    then the program says it's WRONG situation"
-			+ '\n' + "    and what should happen when you get folder as file?"
-			+ '\n'
-			+ '\n' + "  if [source] == folder and [target] == folder"
-			+ '\n' + "    then [source] will be placed as [target]"
-			+ '\n' + "    example: scc get Their/ My/"
-			+ '\n' + "    we get folder Their, but place it as My"
-			+ '\n'
-			;
-			Console.WriteLine(help);
+		static string getLeftValue(string s) {
+			return s.Substring(0, s.IndexOf(' '));
 		}
-
-		static void showHelpSend() {
-			string help =
-					 "Usage:"
-			+ '\n' + "scc send [source] [target]"
-			+ '\n'
-			+ '\n' + "  if [source] == file and [target] == file"
-			+ '\n' + "    then [source] will be placed as [target]"
-			+ '\n' + "    example: scc send A.txt B.txt"
-			+ '\n' + "    we send file A, but on server it will be placed as B"
-			+ '\n' + "    example: scc send A.txt Folder/B.txt"
-			+ '\n' + "    we send file A, but on server it will be placed as B in Folder/"
-			+ '\n'
-			+ '\n' + "  if [source] == file and [target] == folder"
-			+ '\n' + "    then [source] will be placed in [target]"
-			+ '\n' + "    example: scc send A.txt Folder/"
-			+ '\n' + "    we send file A, but on server it will be placed in Folder/"
-			+ '\n'
-			+ '\n' + "  if [source] == folder and [target] == file"
-			+ '\n' + "    then the program says it's WRONG situation"
-			+ '\n' + "    and what should happen when you send folder as file?"
-			+ '\n'
-			+ '\n' + "  if [source] == folder and [target] == folder"
-			+ '\n' + "    then [source] will be placed as [target]"
-			+ '\n' + "    example: scc send Their/ My/"
-			+ '\n' + "    we send folder Their, but on server it will be placed as My"
-			+ '\n'
-			;
-			Console.WriteLine(help);
+		static string getRightValue(string s) {
+			return s.Substring(s.IndexOf(' ') + 1);
 		}
 
 		static void Main(string[] args) {
 			//TODO: blet try blet blet
 			try {
 				FileSyncClient scc = new FileSyncClient();
+				if (!File.Exists("sfsc.config"))
+					File.Create("sfsc.config").Close();
+				string[] config_file = File.ReadAllLines("sfsc.config");
+				foreach (string s in config_file) {
+					scc.setting.Add(getLeftValue(s), getRightValue(s));
+				}
+
 				//TODO: read from file
 				scc.setting.Add("ip", "127.0.0.1");
 				scc.setting.Add("port", "11211");
@@ -261,12 +237,6 @@ namespace Simple.FileSyncClient {
 						case "help":
 						if (args.Length > 1) {
 							switch (args[1]) {
-								case "get":
-								showHelpGet();
-								break;
-								case "send":
-								showHelpSend();
-								break;
 								default:
 								Console.WriteLine("Help page not found");
 								break;
@@ -279,6 +249,10 @@ namespace Simple.FileSyncClient {
 						case "-help":
 						case "--help":
 						showHelp();
+						break;
+
+						case "set":
+							//todo: release
 						break;
 						default:
 						break;
