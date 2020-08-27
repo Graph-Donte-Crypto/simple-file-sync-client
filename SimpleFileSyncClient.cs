@@ -22,8 +22,8 @@ namespace Simple.FileSyncClient {
 
 			string port = setting.GetValueOrDefault("port", null);
 
-			if (ip == null) {
-				Console.WriteLine("port undefiend. Define as 'sfsc set port [server_ip]'");
+			if (port == null) {
+				Console.WriteLine("port undefiend. Define as 'sfsc set port [server_port]'");
 				return false;
 			}
 
@@ -32,7 +32,7 @@ namespace Simple.FileSyncClient {
 				port_as_int = int.Parse(port);
 			}
 			catch(Exception) {
-				Console.WriteLine("port isn't number. Redefine as 'sfsc set port [server_ip]'");
+				Console.WriteLine("port isn't number. Redefine as 'sfsc set port [server_port]'");
 				return false;
 			}
 
